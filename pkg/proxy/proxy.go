@@ -25,11 +25,14 @@ import (
 
 // Varible to hold the API routes and their corresponding handlers
 var apiRoutes = map[string]func(http.ResponseWriter, <-chan *http.Response, log.Logger){
-	"/loki/api/v1/query":       handler.HandleLokiQueries,
-	"/loki/api/v1/query_range": handler.HandleLokiQueries,
-	"/loki/api/v1/series":      handler.HandleLokiSeries,
-	"/loki/api/v1/index/stats": handler.HandleLokiStats,
-	"/loki/api/v1/labels":      handler.HandleLokiLabels,
+	"/loki/api/v1/query":           handler.HandleLokiQueries,
+	"/loki/api/v1/query_range":     handler.HandleLokiQueries,
+	"/loki/api/v1/series":          handler.HandleLokiSeries,
+	"/loki/api/v1/index/stats":     handler.HandleLokiStats,
+	"/loki/api/v1/labels":          handler.HandleLokiLabels,
+	"/loki/api/v1/index/volume":    handler.HandleLokiVolume,
+	"/loki/api/v1/index/volume_range": handler.HandleLokiVolumeRange,
+	"/loki/api/v1/detected_labels": handler.HandleLokiDetectedLabels,
 }
 
 // CustomRoundTripper intercepts the request and response
@@ -205,7 +208,9 @@ func ProxyHandler(w http.ResponseWriter, r *http.Request, config *cfg.Config, lo
 			}
 
 			req.Header = r.Header.Clone()
-			for key, value := range instance.Headers {
+			// Expand environment variables in headers before setting them
+			expandedHeaders := expandHeaderValues(instance.Headers)
+			for key, value := range expandedHeaders {
 				req.Header.Set(key, value)
 			}
 
